@@ -1,0 +1,14 @@
+{
+  "name": "project3-database",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Express API using SQLite with better-sqlite3 for task management.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "express": "^4.22.2"
+  }
+}
