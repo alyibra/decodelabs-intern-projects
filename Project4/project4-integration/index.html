@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager Integration</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.12), transparent 30%), var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+    }
+
+    header {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(2rem, 2.5vw, 2.75rem);
+      letter-spacing: -0.04em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .controls,
+    .stats,
+    .message,
+    .task-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+    }
+
+    .controls {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .controls form {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .controls label {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .controls input,
+    .controls textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 0.95rem 1rem;
+      font: inherit;
+      color: var(--text);
+      background: #ffffff;
+    }
+
+    .controls textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .controls button {
+      width: fit-content;
+      align-self: flex-start;
+      border: none;
+      color: #fff;
+      background: var(--primary);
+      padding: 0.95rem 1.25rem;
+      border-radius: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s ease;
+    }
+
+    .controls button:hover {
+      background: var(--primary-dark);
+    }
+
+    .message {
+      display: none;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .message.visible {
+      display: grid;
+    }
+
+    .message span {
+      font-size: 0.98rem;
+    }
+
+    .message.error {
+      color: #b91c1c;
+      border-left: 4px solid #fca5a5;
+      background: #fef2f2;
+    }
+
+    .message.success {
+      color: #166534;
+      border-left: 4px solid #86efac;
+      background: #ecfdf5;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      padding: 1rem;
+      border-radius: 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .stat-card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .stat-card p {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .task-list h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .tasks {
+      margin: 1rem 0 0;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .task-item {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .task-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .task-title.done {
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
+    .task-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .task-controls button {
+      border: 1px solid var(--border);
+      appearance: none;
+      border-radius: 0.85rem;
+      background: #f8fafc;
+      color: var(--text);
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .task-controls button:hover {
+      transform: translateY(-1px);
+      background: #eef2ff;
+    }
+
+    .task-controls button.delete {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.14);
+      background: rgba(254, 242, 242, 0.9);
+    }
+
+    .task-controls button.toggle {
+      color: var(--success);
+      border-color: rgba(22, 163, 74, 0.2);
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .spinner-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.12);
+      z-index: 100;
+    }
+
+    .spinner-overlay.visible {
+      display: flex;
+    }
+
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 0.5rem solid rgba(37, 99, 235, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      padding: 1.25rem 1rem;
+      border-radius: 1rem;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .task-header,
+      .task-meta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .controls button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Task Manager</h1>
+      <p>Connects to your Express API at <code>http://localhost:3000</code> and manages tasks without any frameworks.</p>
+    </header>
+
+    <section class="layout">
+      <section class="controls" aria-labelledby="task-creation-heading">
+        <div>
+          <h2 id="task-creation-heading">Add a new task</h2>
+          <p class="muted">Enter a title and select a priority, then submit to create a task.</p>
+        </div>
+        <form id="task-form">
+          <label for="task-title">Title</label>
+          <input id="task-title" name="title" type="text" required placeholder="Buy groceries" />
+
+          <label for="task-priority">Priority</label>
+          <select id="task-priority" name="priority" required>
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+
+          <button type="submit">Add Task</button>
+        </form>
+      </section>
+
+      <section class="stats" aria-label="Task statistics">
+        <div class="stat-card">
+          <h3>Total tasks</h3>
+          <p id="stat-total">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Completed</h3>
+          <p id="stat-done">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Pending</h3>
+          <p id="stat-pending">0</p>
+        </div>
+      </section>
+
+      <section class="message" id="message-box" role="status" aria-live="polite"></section>
+
+      <section class="task-list">
+        <h2>Tasks</h2>
+        <div class="tasks" id="tasks-container"></div>
+      </section>
+    </section>
+  </div>
+
+  <div class="spinner-overlay" id="spinner-overlay" aria-hidden="true">
+    <div class="spinner" aria-label="Loading"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api/tasks';
+    const tasksContainer = document.getElementById('tasks-container');
+    const form = document.getElementById('task-form');
+    const messageBox = document.getElementById('message-box');
+    const spinnerOverlay = document.getElementById('spinner-overlay');
+    const statTotal = document.getElementById('stat-total');
+    const statDone = document.getElementById('stat-done');
+    const statPending = document.getElementById('stat-pending');
+
+    let tasks = [];
+
+    function showSpinner(show) {
+      spinnerOverlay.classList.toggle('visible', show);
+      spinnerOverlay.setAttribute('aria-hidden', String(!show));
+    }
+
+    function showMessage(text, type = 'error') {
+      if (!text) {
+        messageBox.className = 'message';
+        messageBox.textContent = '';
+        return;
+      }
+
+      messageBox.className = `message visible ${type}`;
+      messageBox.textContent = text;
+    }
+
+    async function apiRequest(url, options = {}) {
+      showMessage('', 'success');
+      showSpinner(true);
+
+      try {
+        const response = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+
+        const contentType = response.headers.get('Content-Type') || '';
+        const isJson = contentType.includes('application/json');
+        const body = isJson ? await response.json() : null;
+
+        if (!response.ok) {
+          const errorMessage = (body && body.message) || response.statusText || 'Request failed';
+          throw new Error(errorMessage);
+        }
+
+        return body;
+      } catch (error) {
+        showMessage(error.message || 'Unable to reach the API.', 'error');
+        throw error;
+      } finally {
+        showSpinner(false);
+      }
+    }
+
+    function updateStats() {
+      const total = tasks.length;
+      const done = tasks.filter(task => task.done).length;
+      const pending = total - done;
+
+      statTotal.textContent = total;
+      statDone.textContent = done;
+      statPending.textContent = pending;
+    }
+
+    function createTaskElement(task) {
+      const item = document.createElement('article');
+      item.className = 'task-item';
+      item.dataset.id = task.id ?? task._id ?? '';
+
+      const title = document.createElement('h3');
+      title.className = 'task-title';
+      title.textContent = task.title || 'Untitled task';
+      if (task.done) title.classList.add('done');
+
+      const header = document.createElement('div');
+      header.className = 'task-header';
+      header.appendChild(title);
+
+      const controls = document.createElement('div');
+      controls.className = 'task-controls';
+
+      const toggleButton = document.createElement('button');
+      toggleButton.type = 'button';
+      toggleButton.className = 'toggle';
+      toggleButton.textContent = task.done ? 'Mark Pending' : 'Mark Done';
+      toggleButton.addEventListener('click', () => handleToggle(task));
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'delete';
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', () => handleDelete(task));
+
+      controls.append(toggleButton, deleteButton);
+      header.appendChild(controls);
+
+      item.appendChild(header);
+
+      if (task.description) {
+        const description = document.createElement('p');
+        description.textContent = task.description;
+        description.style.margin = '0';
+        description.style.color = 'var(--muted)';
+        item.appendChild(description);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'task-meta';
+      meta.innerHTML = `<span>Status: ${task.done ? 'Done' : 'Pending'}</span><span>Task ID: ${task.id ?? task._id ?? 'unknown'}</span>`;
+      item.appendChild(meta);
+
+      return item;
+    }
+
+    function renderTasks() {
+      tasksContainer.innerHTML = '';
+
+      if (!tasks.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = 'No tasks found. Add one to get started.';
+        tasksContainer.appendChild(empty);
+        updateStats();
+        return;
+      }
+
+      tasks.forEach(task => tasksContainer.appendChild(createTaskElement(task)));
+      updateStats();
+    }
+
+    async function fetchTasks() {
+      try {
+        const data = await apiRequest(API_BASE);
+        tasks = Array.isArray(data) ? data : [];
+        renderTasks();
+      } catch (error) {
+        tasks = [];
+        renderTasks();
+      }
+    }
+
+    async function handleAddTask(event) {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const title = formData.get('title').trim();
+      const priority = (formData.get('priority') || '').toString().trim();
+
+      if (!title) {
+        showMessage('Task title cannot be blank.', 'error');
+        return;
+      }
+
+      if (!priority) {
+        showMessage('Please select a priority for the task.', 'error');
+        return;
+      }
+
+      try {
+        const newTask = await apiRequest(API_BASE, {
+          method: 'POST',
+          body: JSON.stringify({ title, priority }),
+        });
+
+        tasks.unshift(newTask);
+        renderTasks();
+        showMessage('Task created successfully.', 'success');
+        form.reset();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function handleToggle(task) {
+      const id = task.id ?? task._id;
+      if (!id) {
+        showMessage('Unable to update this task because its ID is missing.', 'error');
+        return;
+      }
+
+      try {
+        const updatedTask = await apiRequest(`${API_BASE}/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ done: !task.done }),
+        });
+
+        tasks = tasks.map(item => (item.id === id || item._id === id ? updatedTask : item));
+        renderTasks();
+        showMessage(`Task marked ${updatedTask.done ? 'done' : 'pending'}.`, 'success');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function handleDelete(task) {
+      const id = task.id ?? task._id;
+      if (!id) {
+        showMessage('Unable to delete this task because its ID is missing.', 'error');
+        return;
+      }
+
+      if (!confirm('Delete this task?')) {
+        return;
+      }
+
+      try {
+        await apiRequest(`${API_BASE}/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+
+        tasks = tasks.filter(item => item.id !== id && item._id !== id);
+        renderTasks();
+        showMessage('Task deleted successfully.', 'success');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    form.addEventListener('submit', handleAddTask);
+    window.addEventListener('load', fetchTasks);
+  </script>
+</body>
+</html>
