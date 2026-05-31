@@ -1,0 +1,25 @@
+{
+  "name": "project2-backend",
+  "version": "1.0.0",
+  "description": "A simple Node.js + Express REST API for task management.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "express",
+    "rest",
+    "api",
+    "tasks"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
